@@ -50,11 +50,9 @@ export async function createAgentWorktree(
 		}
 	}
 
-	// Create branch from base
-	await git.branch([branchName, baseBranch]);
-
-	// Create worktree with -f flag to force in case of any lingering state
-	await git.raw(["worktree", "add", "-f", worktreeDir, branchName]);
+	// Create branch and worktree atomically using worktree add -b
+	// This avoids any race between branch creation and worktree assignment
+	await git.raw(["worktree", "add", "-f", "-b", branchName, worktreeDir, baseBranch]);
 
 	return { worktreeDir, branchName };
 }
