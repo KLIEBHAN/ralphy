@@ -13,46 +13,34 @@ export async function createAgentWorktree(
 	worktreeBase: string,
 	originalDir: string
 ): Promise<{ worktreeDir: string; branchName: string }> {
-	const branchName = `ralphy/agent-${agentNum}-${slugify(taskName)}`;
+	// Include timestamp to ensure unique branch names across batches
+	const timestamp = Date.now();
+	const branchName = `ralphy/agent-${agentNum}-${timestamp}-${slugify(taskName)}`;
 	const worktreeDir = join(worktreeBase, `agent-${agentNum}`);
 
 	const git: SimpleGit = simpleGit(originalDir);
 
-	// FIRST: Prune stale worktrees to clean up any orphaned/missing references
-	// This handles the case where directory was deleted but git still has it registered
+	// Prune stale worktrees to clean up any orphaned/missing references
 	await git.raw(["worktree", "prune"]);
 
-	// Remove existing worktree if any (must be done BEFORE deleting branch)
-	// The branch cannot be deleted while it's checked out in a worktree
+	// Remove existing worktree if any (must be done BEFORE creating new one)
 	try {
 		await git.raw(["worktree", "remove", "-f", worktreeDir]);
 	} catch {
-		// Worktree might not exist in git's registry, that's fine
+		// Worktree might not exist in git's registry
 	}
 
-	// Also remove the directory if it exists (handles edge cases)
+	// Remove directory if it exists (handles edge cases)
 	if (existsSync(worktreeDir)) {
 		rmSync(worktreeDir, { recursive: true, force: true });
 	}
 
-	// Prune again after removal to ensure clean state
+	// Prune again after removal
 	await git.raw(["worktree", "prune"]);
 
-	// Now we can safely delete the branch if it exists
-	try {
-		await git.deleteLocalBranch(branchName, true);
-	} catch {
-		// Branch might not exist, or try raw command as fallback
-		try {
-			await git.raw(["branch", "-D", branchName]);
-		} catch {
-			// Branch doesn't exist, that's fine
-		}
-	}
-
-	// Create branch and worktree atomically using worktree add -b
-	// This avoids any race between branch creation and worktree assignment
-	await git.raw(["worktree", "add", "-f", "-b", branchName, worktreeDir, baseBranch]);
+	// Create branch and worktree atomically with -B (create or reset branch)
+	// -B eliminates need for separate branch deletion
+	await git.raw(["worktree", "add", "-f", "-B", branchName, worktreeDir, baseBranch]);
 
 	return { worktreeDir, branchName };
 }
