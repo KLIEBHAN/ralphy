@@ -18,26 +18,43 @@ export async function createAgentWorktree(
 
 	const git: SimpleGit = simpleGit(originalDir);
 
-	// Prune stale worktrees
+	// FIRST: Prune stale worktrees to clean up any orphaned/missing references
+	// This handles the case where directory was deleted but git still has it registered
 	await git.raw(["worktree", "prune"]);
 
-	// Delete branch if it exists
+	// Remove existing worktree if any (must be done BEFORE deleting branch)
+	// The branch cannot be deleted while it's checked out in a worktree
+	try {
+		await git.raw(["worktree", "remove", "-f", worktreeDir]);
+	} catch {
+		// Worktree might not exist in git's registry, that's fine
+	}
+
+	// Also remove the directory if it exists (handles edge cases)
+	if (existsSync(worktreeDir)) {
+		rmSync(worktreeDir, { recursive: true, force: true });
+	}
+
+	// Prune again after removal to ensure clean state
+	await git.raw(["worktree", "prune"]);
+
+	// Now we can safely delete the branch if it exists
 	try {
 		await git.deleteLocalBranch(branchName, true);
 	} catch {
-		// Branch might not exist
+		// Branch might not exist, or try raw command as fallback
+		try {
+			await git.raw(["branch", "-D", branchName]);
+		} catch {
+			// Branch doesn't exist, that's fine
+		}
 	}
 
 	// Create branch from base
 	await git.branch([branchName, baseBranch]);
 
-	// Remove existing worktree dir if any
-	if (existsSync(worktreeDir)) {
-		rmSync(worktreeDir, { recursive: true, force: true });
-	}
-
-	// Create worktree
-	await git.raw(["worktree", "add", worktreeDir, branchName]);
+	// Create worktree with -f flag to force in case of any lingering state
+	await git.raw(["worktree", "add", "-f", worktreeDir, branchName]);
 
 	return { worktreeDir, branchName };
 }
