@@ -36,6 +36,8 @@ export function createProgram(): Command {
     .option("--retry-delay <n>", "Delay between retries in seconds", "5")
     .option("--parallel", "Run tasks in parallel using worktrees")
     .option("--max-parallel <n>", "Maximum parallel agents", "3")
+    .option("--smart-schedule", "Use LLM to predict file conflicts and optimize task batching")
+    .option("--planning-model <name>", "Model to use for planning phase (cheaper model recommended)")
     .option("--branch-per-task", "Create a branch for each task")
     .option("--base-branch <branch>", "Base branch for PRs")
     .option("--create-pr", "Create pull request after each task")
@@ -142,6 +144,8 @@ export function parseArgs(args: string[]): {
           : "auto",
     modelOverride,
     skipMerge: opts.merge === false,
+    smartSchedule: opts.smartSchedule || false,
+    planningModel: opts.planningModel || undefined,
   };
 
   return {

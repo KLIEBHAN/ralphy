@@ -16,6 +16,8 @@ import { YamlTaskSource } from "../tasks/yaml.ts";
 import { logDebug, logError, logInfo, logSuccess, logWarn } from "../ui/logger.ts";
 import { notifyTaskComplete, notifyTaskFailed } from "../ui/notify.ts";
 import { resolveConflictsWithAI } from "./conflict-resolution.ts";
+import { scheduleTasksWithDSatur } from "./graph-coloring.ts";
+import { predictTaskScopes } from "./planning.ts";
 import { buildParallelPrompt } from "./prompt.ts";
 import { isRetryableError, sleep, withRetry } from "./retry.ts";
 import type { ExecutionOptions, ExecutionResult } from "./sequential.ts";
@@ -144,6 +146,8 @@ export async function runParallel(
 		browserEnabled,
 		modelOverride,
 		skipMerge,
+		smartSchedule = false,
+		planningModel,
 	} = options;
 
 	const result: ExecutionResult = {
@@ -157,6 +161,9 @@ export async function runParallel(
 	const worktreeBase = getWorktreeBase(workDir);
 	logDebug(`Worktree base: ${worktreeBase}`);
 
+	// Pre-computed batches for smart scheduling (if enabled)
+	let smartBatches: Task[][] | null = null;
+
 	// Save starting branch to restore after merge phase
 	const startingBranch = await getCurrentBranch(workDir);
 
@@ -169,8 +176,30 @@ export async function runParallel(
 	// Global agent counter to ensure unique numbering across batches
 	let globalAgentNum = 0;
 
+	// If smart scheduling is enabled, compute optimal batches upfront
+	if (smartSchedule && !dryRun) {
+		logInfo("Computing optimal task batches with LLM file prediction...");
+		const allTasks = await taskSource.getAllTasks();
+
+		if (allTasks.length > 1) {
+			// Predict which files each task will modify
+			const scopes = await predictTaskScopes(
+				allTasks,
+				engine,
+				workDir,
+				planningModel || modelOverride,
+			);
+
+			// Use DSatur algorithm to create conflict-minimizing batches
+			smartBatches = scheduleTasksWithDSatur(allTasks, scopes, maxParallel);
+
+			logInfo(`Smart scheduling: ${allTasks.length} tasks organized into ${smartBatches.length} conflict-minimizing batches`);
+		}
+	}
+
 	// Process tasks in batches
 	let iteration = 0;
+	let smartBatchIndex = 0;
 
 	while (true) {
 		// Check iteration limit
@@ -182,8 +211,16 @@ export async function runParallel(
 		// Get tasks for this batch
 		let tasks: Task[] = [];
 
-		// For YAML sources, try to get tasks from the same parallel group
-		if (taskSource instanceof YamlTaskSource) {
+		if (smartBatches && smartBatchIndex < smartBatches.length) {
+			// Use pre-computed smart batches
+			tasks = smartBatches[smartBatchIndex];
+			smartBatchIndex++;
+		} else if (smartBatches && smartBatchIndex >= smartBatches.length) {
+			// All smart batches processed
+			logSuccess("All tasks completed!");
+			break;
+		} else if (taskSource instanceof YamlTaskSource) {
+			// For YAML sources, try to get tasks from the same parallel group
 			const nextTask = await taskSource.getNextTask();
 			if (!nextTask) break;
 
@@ -203,8 +240,8 @@ export async function runParallel(
 			break;
 		}
 
-		// Limit to maxParallel
-		const batch = tasks.slice(0, maxParallel);
+		// Limit to maxParallel (unless using smart batches which are already sized)
+		const batch = smartBatches ? tasks : tasks.slice(0, maxParallel);
 		iteration++;
 
 		logInfo(`Batch ${iteration}: ${batch.length} tasks in parallel`);

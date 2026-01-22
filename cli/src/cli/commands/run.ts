@@ -117,6 +117,8 @@ export async function runLoop(options: RuntimeOptions): Promise<void> {
 			prdFile: options.prdFile,
 			prdIsFolder: options.prdIsFolder,
 			activeSettings,
+			smartSchedule: options.smartSchedule,
+			planningModel: options.planningModel,
 		});
 	} else {
 		result = await runSequential({

@@ -91,6 +91,10 @@ export interface RuntimeOptions {
 	modelOverride?: string;
 	/** Skip automatic branch merging after parallel execution */
 	skipMerge?: boolean;
+	/** Use LLM to predict file conflicts and optimize task batching */
+	smartSchedule?: boolean;
+	/** Model to use for planning phase (cheaper model recommended) */
+	planningModel?: string;
 }
 
 /**
