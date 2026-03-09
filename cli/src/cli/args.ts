@@ -109,6 +109,9 @@ export function parseArgs(args: string[]): {
 	}
 
 	const continueOnFailure = opts.continueOnFailure || false;
+	if (continueOnFailure && !repeatProvided) {
+		console.warn("Warning: --continue-on-failure has no effect without --repeat");
+	}
 	const hasRepeatOptions = repeatProvided || continueOnFailure;
 	if (hasRepeatOptions && !task) {
 		throw new Error("--repeat and --continue-on-failure require a task argument");

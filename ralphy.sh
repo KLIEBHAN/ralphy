@@ -128,9 +128,9 @@ is_positive_integer() {
 
 is_fatal_error_output() {
   local file="$1"
-  grep -Eqi \
-    'not authenticated|no authentication|authentication failed|invalid[^[:space:]]*token|invalid[^[:space:]]*api.?key|unauthorized|(^|[^0-9])401([^0-9]|$)|(^|[^0-9])403([^0-9]|$)|command not found|not installed|is not recognized' \
-    "$file"
+  # Only check the last 20 lines to avoid false positives from AI-generated narrative
+  tail -20 "$file" | grep -Eqi \
+    'not authenticated|no authentication|authentication failed|invalid[^[:space:]]*token|invalid[^[:space:]]*api.?key|unauthorized|(^|[^0-9])401([^0-9]|$)|(^|[^0-9])403([^0-9]|$)|command not found|not installed|is not recognized'
 }
 
 # Slugify text for branch names
@@ -1056,6 +1056,10 @@ check_requirements() {
       fi
       ;;
     json)
+      if ! command -v jq &>/dev/null; then
+        log_error "jq is required for JSON parsing. Install from https://github.com/jqlang/jq"
+        exit 1
+      fi
       if [[ ! -f "$PRD_FILE" ]]; then
         log_error "$PRD_FILE not found in current directory"
         log_info "Create a tasks.json file with a top-level tasks array"

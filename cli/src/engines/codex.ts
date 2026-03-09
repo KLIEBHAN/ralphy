@@ -19,7 +19,7 @@ export class CodexEngine extends BaseAIEngine {
 		try {
 			const args = [
 				"exec",
-				"--dangerously-bypass-approvals-and-sandbox",
+				"--dangerously-bypass-approvals-and-sandbox", // replaces deprecated --full-auto; required for unattended execution
 				"--json",
 				"--output-last-message",
 				lastMessageFile,
