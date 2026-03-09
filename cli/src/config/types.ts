@@ -77,6 +77,10 @@ export interface RuntimeOptions {
 	maxRetries: number;
 	/** Delay between retries in seconds */
 	retryDelay: number;
+	/** Number of times to repeat single task execution */
+	repeatCount: number;
+	/** Continue repeat loop even when a non-fatal task failure occurs */
+	continueOnFailure: boolean;
 	/** Verbose output */
 	verbose: boolean;
 	/** Create branch per task */
@@ -128,6 +132,8 @@ export const DEFAULT_OPTIONS: RuntimeOptions = {
 	maxIterations: 0,
 	maxRetries: 3,
 	retryDelay: 5,
+	repeatCount: 1,
+	continueOnFailure: false,
 	verbose: false,
 	branchPerTask: false,
 	baseBranch: "",

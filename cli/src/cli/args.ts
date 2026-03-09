@@ -31,6 +31,8 @@ export function createProgram(): Command {
 		.option("--copilot", "Use GitHub Copilot")
 		.option("--gemini", "Use Gemini CLI")
 		.option("--dry-run", "Show what would be done without executing")
+		.option("--repeat <n>", "Repeat single task N times")
+		.option("--continue-on-failure", "Continue repeat loop on task failure")
 		.option("--max-iterations <n>", "Maximum iterations (0 = unlimited)", "0")
 		.option("--max-retries <n>", "Maximum retries per task", "3")
 		.option("--retry-delay <n>", "Delay between retries in seconds", "5")
@@ -88,6 +90,30 @@ export function parseArgs(args: string[]): {
 	const opts = program.opts();
 	const [task] = program.args;
 
+	// Detect explicit PRD/task source flags from raw args.
+	// --prd has a commander default, so opts.prd cannot be used for this.
+	const hasExplicitTaskSourceFlag = ralphyArgs.some((arg) =>
+		["--prd", "--yaml", "--json", "--github", "--prd=", "--yaml=", "--json=", "--github="].some(
+			(flag) => (flag.endsWith("=") ? arg.startsWith(flag) : arg === flag),
+		),
+	);
+
+	const repeatProvided = opts.repeat !== undefined;
+	const repeatCount = repeatProvided ? Number(opts.repeat) : 1;
+	if (repeatProvided && (!Number.isInteger(repeatCount) || repeatCount < 1)) {
+		throw new Error("--repeat must be an integer >= 1");
+	}
+
+	const continueOnFailure = opts.continueOnFailure || false;
+	if ((repeatProvided || continueOnFailure) && !task) {
+		throw new Error("--repeat and --continue-on-failure require a task argument");
+	}
+	if ((repeatProvided || continueOnFailure) && hasExplicitTaskSourceFlag) {
+		throw new Error(
+			"--repeat and --continue-on-failure cannot be used with --prd, --yaml, --json, or --github",
+		);
+	}
+
 	// Determine AI engine (--sonnet implies --claude)
 	let aiEngine = "claude";
 	if (opts.sonnet) aiEngine = "claude";
@@ -140,6 +166,8 @@ export function parseArgs(args: string[]): {
 		maxIterations: Number.parseInt(opts.maxIterations, 10) || 0,
 		maxRetries: Number.parseInt(opts.maxRetries, 10) || 3,
 		retryDelay: Number.parseInt(opts.retryDelay, 10) || 5,
+		repeatCount,
+		continueOnFailure,
 		verbose: opts.verbose || false,
 		branchPerTask: opts.branchPerTask || false,
 		baseBranch: opts.baseBranch || "",

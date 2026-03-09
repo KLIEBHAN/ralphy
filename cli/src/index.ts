@@ -3,9 +3,12 @@ import { parseArgs } from "./cli/args.ts";
 import { addRule, showConfig } from "./cli/commands/config.ts";
 import { runInit } from "./cli/commands/init.ts";
 import { runLoop } from "./cli/commands/run.ts";
-import { runTask } from "./cli/commands/task.ts";
+import { runSingleTaskLoop } from "./cli/commands/single-task-loop.ts";
+import { loadConfig } from "./config/loader.ts";
 import { flushAllProgressWrites } from "./config/writer.ts";
+import { sendNotifications } from "./notifications/webhook.ts";
 import { logError } from "./ui/logger.ts";
+import { notify } from "./ui/notify.ts";
 
 async function main(): Promise<void> {
 	try {
@@ -37,7 +40,33 @@ async function main(): Promise<void> {
 
 		// Single task mode (brownfield)
 		if (task) {
-			await runTask(task, options);
+			const result = await runSingleTaskLoop(task, options);
+
+			if (!options.dryRun) {
+				const config = loadConfig(process.cwd());
+				await sendNotifications(config, result.failed > 0 ? "failed" : "completed", {
+					tasksCompleted: result.completed,
+					tasksFailed: result.failed,
+				});
+
+				if (options.repeatCount > 1) {
+					if (result.failed > 0) {
+						notify(
+							"Ralphy - Error",
+							`Repeated task finished: ${result.completed}/${result.total} succeeded, ${result.failed} failed`,
+						);
+					} else {
+						notify(
+							"Ralphy",
+							`Repeated task completed: ${result.completed}/${result.total} succeeded`,
+						);
+					}
+				}
+			}
+
+			if (result.failed > 0) {
+				process.exitCode = 1;
+			}
 			return;
 		}
 
