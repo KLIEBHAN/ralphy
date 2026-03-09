@@ -64,6 +64,12 @@ export function createProgram(): Command {
 	return program;
 }
 
+function resolveBrowserEnabled(flag: boolean | undefined): "auto" | "true" | "false" {
+	if (flag === true) return "true";
+	if (flag === false) return "false";
+	return "auto";
+}
+
 /**
  * Parse command line arguments into RuntimeOptions
  */
@@ -90,12 +96,10 @@ export function parseArgs(args: string[]): {
 	const opts = program.opts();
 	const [task] = program.args;
 
-	// Detect explicit PRD/task source flags from raw args.
-	// --prd has a commander default, so opts.prd cannot be used for this.
+	// --prd has a commander default, so opts.prd alone cannot detect explicit usage
+	const taskSourceFlags = ["--prd", "--yaml", "--json", "--github"];
 	const hasExplicitTaskSourceFlag = ralphyArgs.some((arg) =>
-		["--prd", "--yaml", "--json", "--github", "--prd=", "--yaml=", "--json=", "--github="].some(
-			(flag) => (flag.endsWith("=") ? arg.startsWith(flag) : arg === flag),
-		),
+		taskSourceFlags.some((flag) => arg === flag || arg.startsWith(`${flag}=`)),
 	);
 
 	const repeatProvided = opts.repeat !== undefined;
@@ -105,16 +109,17 @@ export function parseArgs(args: string[]): {
 	}
 
 	const continueOnFailure = opts.continueOnFailure || false;
-	if ((repeatProvided || continueOnFailure) && !task) {
+	const hasRepeatOptions = repeatProvided || continueOnFailure;
+	if (hasRepeatOptions && !task) {
 		throw new Error("--repeat and --continue-on-failure require a task argument");
 	}
-	if ((repeatProvided || continueOnFailure) && hasExplicitTaskSourceFlag) {
+	if (hasRepeatOptions && hasExplicitTaskSourceFlag) {
 		throw new Error(
 			"--repeat and --continue-on-failure cannot be used with --prd, --yaml, --json, or --github",
 		);
 	}
 
-	// Determine AI engine (--sonnet implies --claude)
+	// --sonnet implies --claude and takes priority over other engine flags
 	let aiEngine = "claude";
 	if (opts.sonnet) aiEngine = "claude";
 	else if (opts.opencode) aiEngine = "opencode";
@@ -182,7 +187,7 @@ export function parseArgs(args: string[]): {
 		githubLabel: opts.githubLabel || "",
 		syncIssue: opts.syncIssue ? Number.parseInt(opts.syncIssue, 10) || undefined : undefined,
 		autoCommit: opts.commit !== false,
-		browserEnabled: opts.browser === true ? "true" : opts.browser === false ? "false" : "auto",
+		browserEnabled: resolveBrowserEnabled(opts.browser),
 		modelOverride,
 		skipMerge: opts.merge === false,
 		useSandbox: opts.sandbox || false,
