@@ -45,6 +45,12 @@ describe("parseArgs repeat options", () => {
 		);
 	});
 
+	it("throws on --repeat 10001", () => {
+		expect(() => parseCliArgs(["--repeat", "10001", "task"])).toThrow(
+			"--repeat must be an integer between 1 and 10000",
+		);
+	});
+
 	it("parses --repeat with --continue-on-failure", () => {
 		const { options } = parseCliArgs(["--repeat", "3", "--continue-on-failure", "task"]);
 		expect(options.repeatCount).toBe(3);

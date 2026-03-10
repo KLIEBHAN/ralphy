@@ -887,8 +887,8 @@ parse_args() {
         ;;
       --repeat)
         [[ -z "${2:-}" ]] && { log_error "--repeat requires a value"; exit 1; }
-        if ! is_positive_integer "$2"; then
-          log_error "--repeat must be an integer >= 1"
+        if ! is_positive_integer "$2" || [[ "$2" -gt 10000 ]]; then
+          log_error "--repeat must be an integer between 1 and 10000"
           exit 1
         fi
         REPEAT_COUNT="$2"
