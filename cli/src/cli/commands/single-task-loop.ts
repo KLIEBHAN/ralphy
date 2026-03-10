@@ -47,7 +47,10 @@ export async function runSingleTaskLoop(
 	}
 
 	if (total > 1) {
-		logInfoFn(`Done: ${completed} succeeded, ${failed} failed of ${total}`);
+		const skipped = total - completed - failed;
+		const parts = [`${completed} succeeded`, `${failed} failed`];
+		if (skipped > 0) parts.push(`${skipped} skipped`);
+		logInfoFn(`Done: ${parts.join(", ")} of ${total}`);
 	}
 
 	return { total, completed, failed };
