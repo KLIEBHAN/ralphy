@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, mock } from "bun:test";
+import { beforeAll, describe, expect, it, mock, spyOn } from "bun:test";
 
 let parseArgs: typeof import("../args.ts").parseArgs;
 
@@ -67,6 +67,17 @@ describe("parseArgs repeat options", () => {
 		expect(() => parseCliArgs(["--continue-on-failure"])).toThrow(
 			"--repeat and --continue-on-failure require a task argument",
 		);
+	});
+
+	it("warns when --continue-on-failure is used without --repeat but with a task", () => {
+		const warnSpy = spyOn(console, "warn");
+		const { options } = parseCliArgs(["--continue-on-failure", "do something"]);
+		expect(options.continueOnFailure).toBe(true);
+		expect(options.repeatCount).toBe(1);
+		expect(warnSpy).toHaveBeenCalledWith(
+			"Warning: --continue-on-failure has no effect without --repeat",
+		);
+		warnSpy.mockRestore();
 	});
 
 	it("throws when repeat options are combined with task source flags", () => {

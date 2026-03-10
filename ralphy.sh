@@ -1865,6 +1865,7 @@ run_ai_command() {
       rm -f "$CODEX_LAST_MESSAGE_FILE"
       codex exec --dangerously-bypass-approvals-and-sandbox \
         --json \
+        ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
         --output-last-message "$CODEX_LAST_MESSAGE_FILE" \
         "$prompt" > "$output_file" 2>&1 &
       ;;
@@ -2448,6 +2449,7 @@ Focus only on implementing: $task_name"
           rm -f "$CODEX_LAST_MESSAGE_FILE"
           codex exec --dangerously-bypass-approvals-and-sandbox \
             --json \
+            ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
             --output-last-message "$CODEX_LAST_MESSAGE_FILE" \
             "$prompt"
         ) > "$tmpfile" 2>>"$log_file"
@@ -3074,6 +3076,7 @@ Be careful to preserve functionality from BOTH branches. The goal is to integrat
             codex)
               codex exec --dangerously-bypass-approvals-and-sandbox \
                 --json \
+                ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
                 "$resolve_prompt" > "$resolve_tmpfile" 2>&1
               ;;
             *)
