@@ -3304,7 +3304,10 @@ main() {
     done
 
     if [[ "$total" -gt 1 ]]; then
-      log_info "Done: $completed succeeded, $failed failed of $total"
+      local skipped=$(( total - completed - failed ))
+      local summary="Done: $completed succeeded, $failed failed"
+      [[ $skipped -gt 0 ]] && summary="$summary, $skipped skipped"
+      log_info "$summary of $total"
       if [[ "$failed" -gt 0 ]]; then
         notify_error "Repeated task finished: $completed/$total succeeded, $failed failed"
       else
