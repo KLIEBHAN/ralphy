@@ -104,8 +104,8 @@ export function parseArgs(args: string[]): {
 
 	const repeatProvided = opts.repeat !== undefined;
 	const repeatCount = repeatProvided ? Number(opts.repeat) : 1;
-	if (repeatProvided && (!Number.isInteger(repeatCount) || repeatCount < 1)) {
-		throw new Error("--repeat must be an integer >= 1");
+	if (repeatProvided && (!Number.isInteger(repeatCount) || repeatCount < 1 || repeatCount > 10_000)) {
+		throw new Error("--repeat must be an integer between 1 and 10000");
 	}
 
 	const continueOnFailure = opts.continueOnFailure || false;

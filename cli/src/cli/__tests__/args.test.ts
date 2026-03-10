@@ -23,25 +23,25 @@ describe("parseArgs repeat options", () => {
 
 	it("throws on --repeat 0", () => {
 		expect(() => parseCliArgs(["--repeat", "0", "task"])).toThrow(
-			"--repeat must be an integer >= 1",
+			"--repeat must be an integer between 1 and 10000",
 		);
 	});
 
 	it("throws on --repeat -1", () => {
 		expect(() => parseCliArgs(["--repeat", "-1", "task"])).toThrow(
-			"--repeat must be an integer >= 1",
+			"--repeat must be an integer between 1 and 10000",
 		);
 	});
 
 	it("throws on --repeat abc", () => {
 		expect(() => parseCliArgs(["--repeat", "abc", "task"])).toThrow(
-			"--repeat must be an integer >= 1",
+			"--repeat must be an integer between 1 and 10000",
 		);
 	});
 
 	it("throws on --repeat 1.5", () => {
 		expect(() => parseCliArgs(["--repeat", "1.5", "task"])).toThrow(
-			"--repeat must be an integer >= 1",
+			"--repeat must be an integer between 1 and 10000",
 		);
 	});
 

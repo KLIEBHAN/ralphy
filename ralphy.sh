@@ -3188,6 +3188,9 @@ main() {
   parse_args "$@"
 
   # Repeat options are only valid in single-task mode.
+  if [[ "$CONTINUE_ON_FAILURE" == true && "$REPEAT_FLAG_USED" != true ]]; then
+    log_warn "--continue-on-failure has no effect without --repeat"
+  fi
   if [[ "$REPEAT_FLAG_USED" == true || "$CONTINUE_ON_FAILURE" == true ]]; then
     if [[ -z "$SINGLE_TASK" ]]; then
       log_error "--repeat and --continue-on-failure require a task argument"
