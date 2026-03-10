@@ -109,7 +109,7 @@ export function parseArgs(args: string[]): {
 	}
 
 	const continueOnFailure = opts.continueOnFailure || false;
-	if (continueOnFailure && !repeatProvided) {
+	if (continueOnFailure && !repeatProvided && task) {
 		console.warn("Warning: --continue-on-failure has no effect without --repeat");
 	}
 	const hasRepeatOptions = repeatProvided || continueOnFailure;

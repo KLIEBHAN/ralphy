@@ -678,6 +678,7 @@ run_brownfield_task() {
     codex)
       codex exec --dangerously-bypass-approvals-and-sandbox \
         --json \
+        ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
         "$prompt" 2>&1 | tee "$output_file"
       ;;
   esac
@@ -3188,7 +3189,7 @@ main() {
   parse_args "$@"
 
   # Repeat options are only valid in single-task mode.
-  if [[ "$CONTINUE_ON_FAILURE" == true && "$REPEAT_FLAG_USED" != true ]]; then
+  if [[ "$CONTINUE_ON_FAILURE" == true && "$REPEAT_FLAG_USED" != true && -n "$SINGLE_TASK" ]]; then
     log_warn "--continue-on-failure has no effect without --repeat"
   fi
   if [[ "$REPEAT_FLAG_USED" == true || "$CONTINUE_ON_FAILURE" == true ]]; then
