@@ -628,6 +628,12 @@ run_brownfield_task() {
   local prompt
   prompt=$(build_brownfield_prompt "$task")
 
+  if [[ "$DRY_RUN" == true ]]; then
+    log_info "DRY RUN - Would execute:"
+    echo "${DIM}$prompt${RESET}"
+    return 0
+  fi
+
   # Create temp file for output
   local output_file
   output_file=$(mktemp)
