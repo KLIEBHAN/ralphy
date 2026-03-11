@@ -3282,6 +3282,13 @@ main() {
     echo "${BOLD}============================================${RESET}"
 
     local total="$REPEAT_COUNT"
+
+    # Dry-run: show prompt once, skip repeat iterations
+    if [[ "$DRY_RUN" == true ]]; then
+      run_brownfield_task "$SINGLE_TASK"
+      return $?
+    fi
+
     local completed=0
     local failed=0
     local run_idx

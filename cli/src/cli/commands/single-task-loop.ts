@@ -26,6 +26,13 @@ export async function runSingleTaskLoop(
 	const logInfoFn = deps?.logInfoFn ?? logInfo;
 
 	const total = options.repeatCount;
+
+	// Dry-run: show prompt once, skip repeat iterations
+	if (options.dryRun) {
+		await runTaskFn(task, options);
+		return { total, completed: 0, failed: 0 };
+	}
+
 	let completed = 0;
 	let failed = 0;
 
