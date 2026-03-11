@@ -3311,10 +3311,12 @@ main() {
       local summary="Done: $completed succeeded, $failed failed"
       [[ $skipped -gt 0 ]] && summary="$summary, $skipped skipped"
       log_info "$summary of $total"
+      local skipped_suffix=""
+      [[ $skipped -gt 0 ]] && skipped_suffix=", $skipped skipped"
       if [[ "$failed" -gt 0 ]]; then
-        notify_error "Repeated task finished: $completed/$total succeeded, $failed failed"
+        notify_error "Repeated task finished: $completed/$total succeeded, $failed failed${skipped_suffix}"
       else
-        notify_done "Repeated task completed: $completed/$total succeeded"
+        notify_done "Repeated task completed: $completed/$total succeeded${skipped_suffix}"
       fi
     fi
 

@@ -50,15 +50,17 @@ async function main(): Promise<void> {
 				});
 
 				if (options.repeatCount > 1) {
+					const skipped = result.total - result.completed - result.failed;
+					const skippedSuffix = skipped > 0 ? `, ${skipped} skipped` : "";
 					if (result.failed > 0) {
 						notify(
 							"Ralphy - Error",
-							`Repeated task finished: ${result.completed}/${result.total} succeeded, ${result.failed} failed`,
+							`Repeated task finished: ${result.completed}/${result.total} succeeded, ${result.failed} failed${skippedSuffix}`,
 						);
 					} else {
 						notify(
 							"Ralphy",
-							`Repeated task completed: ${result.completed}/${result.total} succeeded`,
+							`Repeated task completed: ${result.completed}/${result.total} succeeded${skippedSuffix}`,
 						);
 					}
 				}
