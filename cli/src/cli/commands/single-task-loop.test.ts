@@ -77,4 +77,23 @@ describe("runSingleTaskLoop", () => {
 		expect(result.failed).toBe(1);
 		expect(result.total).toBe(5);
 	});
+
+	it("calls runTaskFn exactly once in dry-run mode regardless of repeatCount", async () => {
+		let calls = 0;
+		const result = await runSingleTaskLoop(
+			"task",
+			{ ...DEFAULT_OPTIONS, dryRun: true, repeatCount: 5 },
+			{
+				runTaskFn: async () => {
+					calls++;
+					return { success: true, fatal: false };
+				},
+				logInfoFn: () => {},
+			},
+		);
+		expect(calls).toBe(1);
+		expect(result.total).toBe(5);
+		expect(result.completed).toBe(0);
+		expect(result.failed).toBe(0);
+	});
 });
