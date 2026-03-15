@@ -64,10 +64,9 @@ export function createProgram(): Command {
 	return program;
 }
 
-function resolveBrowserEnabled(flag: boolean | undefined): "auto" | "true" | "false" {
+function resolveBrowserEnabled(flag: boolean | undefined): "true" | "false" {
 	if (flag === true) return "true";
-	if (flag === false) return "false";
-	return "auto";
+	return "false";
 }
 
 /**

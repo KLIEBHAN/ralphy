@@ -109,8 +109,8 @@ export interface RuntimeOptions {
 	syncIssue?: number;
 	/** Auto-commit changes */
 	autoCommit: boolean;
-	/** Browser automation mode: 'auto' | 'true' | 'false' */
-	browserEnabled: "auto" | "true" | "false";
+	/** Browser automation mode: 'true' | 'false' */
+	browserEnabled: "true" | "false";
 	/** Override default model for the engine */
 	modelOverride?: string;
 	/** Skip automatic branch merging after parallel execution */
@@ -147,5 +147,5 @@ export const DEFAULT_OPTIONS: RuntimeOptions = {
 	githubRepo: "",
 	githubLabel: "",
 	autoCommit: true,
-	browserEnabled: "auto",
+	browserEnabled: "false",
 };
