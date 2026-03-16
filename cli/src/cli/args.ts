@@ -112,13 +112,13 @@ export function parseArgs(args: string[]): {
 		console.warn("Warning: --continue-on-failure has no effect without --repeat");
 	}
 	const hasRepeatOptions = repeatProvided || continueOnFailure;
-	if (hasRepeatOptions && !task) {
-		throw new Error("--repeat and --continue-on-failure require a task argument");
-	}
 	if (hasRepeatOptions && hasExplicitTaskSourceFlag) {
 		throw new Error(
 			"--repeat and --continue-on-failure cannot be used with --prd, --yaml, --json, or --github",
 		);
+	}
+	if (hasRepeatOptions && !task) {
+		throw new Error("--repeat and --continue-on-failure require a task argument");
 	}
 
 	// --sonnet implies --claude and takes priority over other engine flags

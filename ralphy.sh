@@ -3214,12 +3214,12 @@ main() {
     log_warn "--continue-on-failure has no effect without --repeat"
   fi
   if [[ "$REPEAT_FLAG_USED" == true || "$CONTINUE_ON_FAILURE" == true ]]; then
-    if [[ -z "$SINGLE_TASK" ]]; then
-      log_error "--repeat and --continue-on-failure require a task argument"
-      exit 1
-    fi
     if [[ "$TASK_SOURCE_FLAG_USED" == true ]]; then
       log_error "--repeat and --continue-on-failure cannot be used with --prd, --yaml, --json, or --github"
+      exit 1
+    fi
+    if [[ -z "$SINGLE_TASK" ]]; then
+      log_error "--repeat and --continue-on-failure require a task argument"
       exit 1
     fi
   fi

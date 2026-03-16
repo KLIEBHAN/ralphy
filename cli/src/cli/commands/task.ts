@@ -29,6 +29,7 @@ export async function runTask(task: string, options: RuntimeOptions): Promise<Ta
 	if (!available) {
 		const error = `${engine.name} CLI not found. Make sure '${engine.cliCommand}' is in your PATH.`;
 		logError(error);
+		logTaskProgress(task, "failed", workDir);
 		return { success: false, fatal: true, error };
 	}
 
