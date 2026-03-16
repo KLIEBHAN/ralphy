@@ -644,51 +644,60 @@ run_brownfield_task() {
     log_info "Browser automation enabled (agent-browser)"
   fi
 
-  # Run the AI engine (tee to show output while saving for parsing)
-  case "$AI_ENGINE" in
-    claude)
-      claude --dangerously-skip-permissions \
-        ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
-        -p "$prompt" 2>&1 | tee "$output_file"
-      ;;
-    opencode)
-      opencode --output-format stream-json \
-        --approval-mode full-auto \
-        ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
-        "$prompt" 2>&1 | tee "$output_file"
-      ;;
-    cursor)
-      agent --dangerously-skip-permissions \
-        -p "$prompt" 2>&1 | tee "$output_file"
-      ;;
-    qwen)
-      qwen --output-format stream-json \
-        --approval-mode yolo \
-        -p "$prompt" 2>&1 | tee "$output_file"
-      ;;
-    droid)
-      droid exec --output-format stream-json \
-        --auto medium \
-        "$prompt" 2>&1 | tee "$output_file"
-      ;;
-    copilot)
-      copilot -p "$prompt" \
-        ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
-        2>&1 | tee "$output_file"
-      ;;
-    gemini)
-      gemini --output-format stream-json \
-        --yolo \
-        ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
-        -p "$prompt" 2>&1 | tee "$output_file"
-      ;;
-    codex)
-      codex exec --dangerously-bypass-approvals-and-sandbox \
-        --json \
-        ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
-        "$prompt" 2>&1 | tee "$output_file"
-      ;;
-  esac
+  # Run the AI engine
+  run_engine() {
+    case "$AI_ENGINE" in
+      claude)
+        claude --dangerously-skip-permissions \
+          ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
+          -p "$prompt" 2>&1
+        ;;
+      opencode)
+        opencode --output-format stream-json \
+          --approval-mode full-auto \
+          ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
+          "$prompt" 2>&1
+        ;;
+      cursor)
+        agent --dangerously-skip-permissions \
+          -p "$prompt" 2>&1
+        ;;
+      qwen)
+        qwen --output-format stream-json \
+          --approval-mode yolo \
+          -p "$prompt" 2>&1
+        ;;
+      droid)
+        droid exec --output-format stream-json \
+          --auto medium \
+          "$prompt" 2>&1
+        ;;
+      copilot)
+        copilot -p "$prompt" \
+          ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
+          2>&1
+        ;;
+      gemini)
+        gemini --output-format stream-json \
+          --yolo \
+          ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
+          -p "$prompt" 2>&1
+        ;;
+      codex)
+        codex exec --dangerously-bypass-approvals-and-sandbox \
+          --json \
+          ${MODEL_OVERRIDE:+--model "$MODEL_OVERRIDE"} \
+          "$prompt" 2>&1
+        ;;
+    esac
+  }
+
+  # In repeat mode, suppress streaming output to avoid a wall of text
+  if [[ "$REPEAT_COUNT" -gt 1 ]]; then
+    run_engine > "$output_file"
+  else
+    run_engine | tee "$output_file"
+  fi
 
   local exit_code=$?
 
