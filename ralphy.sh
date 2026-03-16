@@ -58,7 +58,8 @@ SYNC_ISSUE=""  # GitHub issue number to sync PRD with
 TASK_SOURCE_FLAG_USED=false
 
 # Browser automation (agent-browser)
-BROWSER_ENABLED="auto"  # auto, true, false
+BROWSER_ENABLED="false"  # true, false; pass --browser to enable
+BROWSER_FLAG_USED=false
 
 # Colors (detect if terminal supports colors)
 if [[ -t 1 ]] && command -v tput &>/dev/null && [[ $(tput colors 2>/dev/null || echo 0) -ge 8 ]]; then
@@ -151,8 +152,8 @@ is_browser_available() {
     fi
     return 0
   fi
-  # auto mode: check if available
-  command -v agent-browser &>/dev/null
+  # Any other value (including legacy "auto"): treat as disabled
+  return 1
 }
 
 # Get browser instructions for prompt injection
@@ -348,8 +349,8 @@ boundaries:
 # Capabilities - optional tool integrations
 capabilities:
   # Browser automation via agent-browser (https://agent-browser.dev)
-  # Values: "auto" (detect), "true" (force enable), "false" (disable)
-  browser: "auto"
+  # Values: "true" (enable), "false" (disable)
+  browser: "false"
 EOF
 
   # Create progress.txt
@@ -388,14 +389,14 @@ load_ralphy_boundaries() {
 
 # Load browser setting from config.yaml
 load_browser_setting() {
-  [[ ! -f "$CONFIG_FILE" ]] && echo "auto" && return
+  [[ ! -f "$CONFIG_FILE" ]] && echo "false" && return
 
   if command -v yq &>/dev/null; then
     local setting
-    setting=$(yq -r '.capabilities.browser // "auto"' "$CONFIG_FILE" 2>/dev/null || echo "auto")
+    setting=$(yq -r '.capabilities.browser // "false"' "$CONFIG_FILE" 2>/dev/null || echo "false")
     echo "$setting"
   else
-    echo "auto"
+    echo "false"
   fi
 }
 
@@ -1009,10 +1010,12 @@ parse_args() {
         ;;
       --browser)
         BROWSER_ENABLED="true"
+        BROWSER_FLAG_USED=true
         shift
         ;;
       --no-browser)
         BROWSER_ENABLED="false"
+        BROWSER_FLAG_USED=true
         shift
         ;;
       -*)
@@ -3213,7 +3216,7 @@ main() {
   fi
 
   # Load browser setting from config (if not overridden by CLI flag)
-  if [[ "$BROWSER_ENABLED" == "auto" ]] && [[ -f "$CONFIG_FILE" ]]; then
+  if [[ "$BROWSER_FLAG_USED" != true ]] && [[ -f "$CONFIG_FILE" ]]; then
     BROWSER_ENABLED=$(load_browser_setting)
   fi
 
